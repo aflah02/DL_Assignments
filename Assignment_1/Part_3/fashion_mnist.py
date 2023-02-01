@@ -21,10 +21,6 @@ def load_data(normalize=True, one_hot=True):
     X_test = X_test.to_numpy()
     y_test = y_test.to_numpy()
 
-    # # 10K Training Examples
-    # X_train = X_train[:10000]
-    # y_train = y_train[:10000]
-
     # Normalize the data
     if normalize:
         X_train = X_train / 255
