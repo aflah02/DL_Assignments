@@ -18,4 +18,3 @@ class BooleanDataset:
                 self.labels.append(self.data[i][0] ^ self.data[i][1])
             elif self.boolean_op == 'NOT':
                 self.labels.append(not self.data[i])
-            
