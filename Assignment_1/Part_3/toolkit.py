@@ -75,7 +75,7 @@ class AffineTransformationLayer:
         self.bias -= learning_rate * output_error
         return input_error
 
-class ActivationLayer:
+class NonLinearTransformationLayer:
     def __init__(self, activation, activation_prime):
         self.activation = activation
         self.activation_prime = activation_prime
@@ -108,7 +108,7 @@ class SoftmaxLayer:
         return self.output
     
     def backward(self, output_error, learning_rate):
-        input_error = np.zeros(output_error.shape)
+        _ = np.zeros(output_error.shape)
         out = np.tile(self.output.T, self.input_size)
         return self.output * np.dot(output_error, np.identity(self.input_size) - out)
 
@@ -139,11 +139,11 @@ class NeuralNetwork:
         self.network.append(ShapeHandler(input_shape))
         # Input To Hidden
         self.network.append(AffineTransformationLayer(n_inputs, hidden_layer_sizes[0], weight_initialization))
-        self.network.append(ActivationLayer(activation_fn, activation_fn_derivative))
+        self.network.append(NonLinearTransformationLayer(activation_fn, activation_fn_derivative))
         # Hidden To Hidden
         for i in range(len(hidden_layer_sizes) - 1):
             self.network.append(AffineTransformationLayer(hidden_layer_sizes[i], hidden_layer_sizes[i+1], weight_initialization))
-            self.network.append(ActivationLayer(activation_fn, activation_fn_derivative))
+            self.network.append(NonLinearTransformationLayer(activation_fn, activation_fn_derivative))
         # Hidden To Output
         self.network.append(AffineTransformationLayer(hidden_layer_sizes[-1], n_outs, weight_initialization))
         self.network.append(SoftmaxLayer(n_outs))
