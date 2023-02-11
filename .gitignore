@@ -1,5 +1,6 @@
+__pycache__/
+
 Assignment_1/Part_3/Data/fashion-mnist_train.csv
 Assignment_1/Part_3/Data/fashion-mnist_test.csv
-Assignment_1/Part_3/__pycache__
 
 venv
