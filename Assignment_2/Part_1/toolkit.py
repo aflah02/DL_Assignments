@@ -67,8 +67,8 @@ class AffineTransformationLayer:
             self.vt_weights = np.zeros((input_size, output_size))
             self.vt_bias = np.zeros((1, output_size))
         if optimizer == 'nestrov_accelerated_gradient':
-            self.update_weights = np.zeros((input_size, output_size))
-            self.update_bias = np.zeros((1, output_size))
+            self.vt_weights = np.zeros((input_size, output_size))
+            self.vt_bias = np.zeros((1, output_size))
 
     def forward(self, input):
         self.input = input
@@ -88,12 +88,12 @@ class AffineTransformationLayer:
             self.bias -= self.vt_bias
         if optimizer == 'nestrov_accelerated_gradient':
             gamma = optimizer_params['gamma']
-            weights_lookahead = self.weights - gamma * self.update_weights
-            bias_lookahead = self.bias - gamma * self.update_bias
-            self.update_weights = gamma * self.update_weights + learning_rate * weights_lookahead
-            self.weights -= self.update_weights
-            self.update_bias = gamma * self.update_bias + learning_rate * bias_lookahead
-            self.bias -= self.update_bias
+            vt_weights_prev = self.vt_weights
+            vt_bias_prev = self.vt_bias
+            self.vt_weights = gamma * self.vt_weights - learning_rate * weights_error
+            self.vt_bias = gamma * self.vt_bias - learning_rate * output_error
+            self.weights += -gamma * vt_weights_prev + (1 + gamma) * self.vt_weights
+            self.bias += -gamma * vt_bias_prev + (1 + gamma) * self.vt_bias
         return input_error
 
 class NonLinearTransformationLayer:
