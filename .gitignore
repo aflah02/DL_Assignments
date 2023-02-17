@@ -3,4 +3,7 @@ __pycache__/
 Assignment_1/Part_3/Data/fashion-mnist_train.csv
 Assignment_1/Part_3/Data/fashion-mnist_test.csv
 
+Assignment_2/Part_1/Data/fashion-mnist_train.csv
+Assignment_2/Part_1/Data/fashion-mnist_test.csv
+
 venv
