@@ -70,8 +70,17 @@ class AffineTransformationLayer:
             self.vt_weights = np.zeros((input_size, output_size))
             self.vt_bias = np.zeros((1, output_size))
         if optimizer == 'adagrad':
-            self.weight_gradient_cache = np.zeros((input_size, output_size))
-            self.bias_gradient_cache = np.zeros((1, output_size))
+            self.second_moment_estimate_weight = np.zeros((input_size, output_size))
+            self.second_moment_estimate_bias = np.zeros((1, output_size))
+        if optimizer == 'rmsprop':
+            self.second_moment_estimate_weight = np.zeros((input_size, output_size))
+            self.second_moment_estimate_bias = np.zeros((1, output_size))
+        if optimizer == 'adam':
+            self.second_moment_estimate_weight = np.zeros((input_size, output_size))
+            self.second_moment_estimate_bias = np.zeros((1, output_size))
+            self.first_moment_estimate_weight = np.zeros((input_size, output_size))
+            self.first_moment_estimate_bias = np.zeros((1, output_size))
+            self.current_iteration = 0
 
     def forward(self, input):
         self.input = input
@@ -99,10 +108,33 @@ class AffineTransformationLayer:
             self.bias += -gamma * vt_bias_prev + (1 + gamma) * self.vt_bias
         if optimizer == 'adagrad':
             epsilon = optimizer_params['epsilon']
-            self.weight_gradient_cache += weights_error ** 2
-            self.bias_gradient_cache += output_error ** 2
-            self.weights -= learning_rate * weights_error / (np.sqrt(self.weight_gradient_cache) + epsilon)
-            self.bias -= learning_rate * output_error / (np.sqrt(self.bias_gradient_cache) + epsilon)
+            self.second_moment_estimate_weight += weights_error ** 2
+            self.second_moment_estimate_bias += output_error ** 2
+            self.weights -= learning_rate * weights_error / (np.sqrt(self.second_moment_estimate_weight) + epsilon)
+            self.bias -= learning_rate * output_error / (np.sqrt(self.second_moment_estimate_bias) + epsilon)
+        if optimizer == 'rmsprop':
+            decay_rate = optimizer_params['decay_rate']
+            epsilon = optimizer_params['epsilon']
+            self.second_moment_estimate_weight = decay_rate * self.second_moment_estimate_weight + (1 - decay_rate) * weights_error ** 2
+            self.second_moment_estimate_bias = decay_rate * self.second_moment_estimate_bias + (1 - decay_rate) * output_error ** 2
+            self.weights -= learning_rate * weights_error / (np.sqrt(self.second_moment_estimate_weight) + epsilon)
+            self.bias -= learning_rate * output_error / (np.sqrt(self.second_moment_estimate_bias) + epsilon)
+        if optimizer == 'adam':
+            self.current_iteration += 1
+            beta1 = optimizer_params['beta1']
+            beta2 = optimizer_params['beta2']
+            epsilon = optimizer_params['epsilon']
+            self.first_moment_estimate_weight = beta1 * self.first_moment_estimate_weight + (1 - beta1) * weights_error
+            self.first_moment_estimate_bias = beta1 * self.first_moment_estimate_bias + (1 - beta1) * output_error
+            self.second_moment_estimate_weight = beta2 * self.second_moment_estimate_weight + (1 - beta2) * weights_error ** 2
+            self.second_moment_estimate_bias = beta2 * self.second_moment_estimate_bias + (1 - beta2) * output_error ** 2
+            bias_corrected_first_moment_weight = self.first_moment_estimate_weight / (1 - beta1 ** self.current_iteration)
+            bias_corrected_first_moment_bias = self.first_moment_estimate_bias / (1 - beta1 ** self.current_iteration)
+            bias_corrected_second_moment_weight = self.second_moment_estimate_weight / (1 - beta2 ** self.current_iteration)
+            bias_corrected_second_moment_bias = self.second_moment_estimate_bias / (1 - beta2 ** self.current_iteration)
+            self.weights -= learning_rate * bias_corrected_first_moment_weight / (np.sqrt(bias_corrected_second_moment_weight) + epsilon)
+            self.bias -= learning_rate * bias_corrected_first_moment_bias / (np.sqrt(bias_corrected_second_moment_bias) + epsilon)
+
         return input_error
 
 class NonLinearTransformationLayer:
