@@ -65,22 +65,22 @@ class AffineTransformationLayer:
             self.weights = np.random.normal(0, 0.1, (input_size, output_size))
             self.bias = np.random.normal(0, 0.1, (1, output_size))
         if optimizer == 'momentum':
-            self.vt_weights = np.zeros((input_size, 1))
-            self.vt_bias = np.zeros(1)
+            self.vt_weights = np.zeros((input_size, output_size))
+            self.vt_bias = np.zeros((1, output_size))
         if optimizer == 'nestrov_accelerated_gradient':
-            self.vt_weights = np.zeros((input_size, 1))
-            self.vt_bias = np.zeros(1)
+            self.vt_weights = np.zeros((input_size, output_size))
+            self.vt_bias = np.zeros((1, output_size))
         if optimizer == 'adagrad':
-            self.second_moment_estimate_weight = np.zeros((input_size, 1))
-            self.second_moment_estimate_bias = np.zeros(1)
+            self.second_moment_estimate_weight = np.zeros((input_size, output_size))
+            self.second_moment_estimate_bias = np.zeros((1, output_size))
         if optimizer == 'rmsprop':
-            self.S_dw = np.zeros((input_size, 1))
-            self.S_db = np.zeros(1)
+            self.S_dw = np.zeros((input_size, output_size))
+            self.S_db = np.zeros((1, output_size))
         if optimizer == 'adam':
-            self.second_moment_estimate_weight = np.zeros((input_size, 1))
-            self.second_moment_estimate_bias = np.zeros(1)
-            self.first_moment_estimate_weight = np.zeros((input_size, 1))
-            self.first_moment_estimate_bias = np.zeros(1)
+            self.second_moment_estimate_weight = np.zeros((input_size, output_size))
+            self.second_moment_estimate_bias = np.zeros((1, output_size))
+            self.first_moment_estimate_weight = np.zeros((input_size, output_size))
+            self.first_moment_estimate_bias = np.zeros((1, output_size))
             self.current_iteration = 0
 
     def forward(self, input):
@@ -111,8 +111,8 @@ class AffineTransformationLayer:
             epsilon = optimizer_params['epsilon']
             self.second_moment_estimate_weight += weights_error ** 2
             self.second_moment_estimate_bias += output_error ** 2
-            self.weights -= learning_rate * weights_error / (np.sqrt(self.second_moment_estimate_weight) + epsilon)
-            self.bias -= learning_rate * output_error / (np.sqrt(self.second_moment_estimate_bias) + epsilon)
+            self.weights -= learning_rate * weights_error / (np.sqrt(self.second_moment_estimate_weight + epsilon))
+            self.bias -= learning_rate * output_error / (np.sqrt(self.second_moment_estimate_bias + epsilon))
         if optimizer == 'rmsprop':
             beta = optimizer_params['beta']
             epsilon = optimizer_params['epsilon']
