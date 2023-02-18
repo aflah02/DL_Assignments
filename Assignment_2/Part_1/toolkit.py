@@ -57,6 +57,7 @@ class AffineTransformationLayer:
     def __init__(self, input_size, output_size, weight_initializer, optimizer=None, optimizer_params=None):
         self.input_size = input_size
         self.output_size = output_size
+        self.feature_size = input_size
         if weight_initializer == 'zeros':
             self.weights = np.zeros((input_size, output_size))
             self.bias = np.zeros((1, output_size))
@@ -64,22 +65,22 @@ class AffineTransformationLayer:
             self.weights = np.random.normal(0, 0.1, (input_size, output_size))
             self.bias = np.random.normal(0, 0.1, (1, output_size))
         if optimizer == 'momentum':
-            self.vt_weights = np.zeros((input_size, output_size))
-            self.vt_bias = np.zeros((1, output_size))
+            self.vt_weights = np.zeros((input_size, 1))
+            self.vt_bias = np.zeros(1)
         if optimizer == 'nestrov_accelerated_gradient':
-            self.vt_weights = np.zeros((input_size, output_size))
-            self.vt_bias = np.zeros((1, output_size))
+            self.vt_weights = np.zeros((input_size, 1))
+            self.vt_bias = np.zeros(1)
         if optimizer == 'adagrad':
-            self.second_moment_estimate_weight = np.zeros((input_size, output_size))
-            self.second_moment_estimate_bias = np.zeros((1, output_size))
+            self.second_moment_estimate_weight = np.zeros((input_size, 1))
+            self.second_moment_estimate_bias = np.zeros(1)
         if optimizer == 'rmsprop':
-            self.second_moment_estimate_weight = np.zeros((input_size, output_size))
-            self.second_moment_estimate_bias = np.zeros((1, output_size))
+            self.S_dw = np.zeros((input_size, 1))
+            self.S_db = np.zeros(1)
         if optimizer == 'adam':
-            self.second_moment_estimate_weight = np.zeros((input_size, output_size))
-            self.second_moment_estimate_bias = np.zeros((1, output_size))
-            self.first_moment_estimate_weight = np.zeros((input_size, output_size))
-            self.first_moment_estimate_bias = np.zeros((1, output_size))
+            self.second_moment_estimate_weight = np.zeros((input_size, 1))
+            self.second_moment_estimate_bias = np.zeros(1)
+            self.first_moment_estimate_weight = np.zeros((input_size, 1))
+            self.first_moment_estimate_bias = np.zeros(1)
             self.current_iteration = 0
 
     def forward(self, input):
@@ -113,12 +114,12 @@ class AffineTransformationLayer:
             self.weights -= learning_rate * weights_error / (np.sqrt(self.second_moment_estimate_weight) + epsilon)
             self.bias -= learning_rate * output_error / (np.sqrt(self.second_moment_estimate_bias) + epsilon)
         if optimizer == 'rmsprop':
-            decay_rate = optimizer_params['decay_rate']
+            beta = optimizer_params['beta']
             epsilon = optimizer_params['epsilon']
-            self.second_moment_estimate_weight = decay_rate * self.second_moment_estimate_weight + (1 - decay_rate) * weights_error ** 2
-            self.second_moment_estimate_bias = decay_rate * self.second_moment_estimate_bias + (1 - decay_rate) * output_error ** 2
-            self.weights -= learning_rate * weights_error / (np.sqrt(self.second_moment_estimate_weight) + epsilon)
-            self.bias -= learning_rate * output_error / (np.sqrt(self.second_moment_estimate_bias) + epsilon)
+            self.S_dw = beta * self.S_dw + (1 - beta) * weights_error ** 2
+            self.S_db = beta * self.S_db + (1 - beta) * output_error ** 2
+            self.weights -= learning_rate * weights_error / (np.sqrt(self.S_dw + epsilon))
+            self.bias -= learning_rate * output_error / (np.sqrt(self.S_db + epsilon))
         if optimizer == 'adam':
             self.current_iteration += 1
             beta1 = optimizer_params['beta1']
