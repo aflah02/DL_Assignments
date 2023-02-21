@@ -162,11 +162,12 @@ class NeuralNetwork:
     def fit(self, x_train, y_train, x_valid, y_valid, epochs=1000, learning_rate=0.1, batch_size=32, early_stopping=True, patience=10, verbose=True):
         x_batches_train = np.array_split(x_train, len(x_train)/ batch_size)
         y_batches_train = np.array_split(y_train, len(y_train)/ batch_size)
+        number_of_samples = len(x_train)
         for epoch in range(epochs):
             error = 0
             error_val = 0
-            for x_train, y_train in zip(x_batches_train,y_batches_train):
-                for x, y_true in zip(x_train, y_train):
+            for x_batch_train, y_batch_train in zip(x_batches_train,y_batches_train):
+                for x, y_true in zip(x_batch_train, y_batch_train):
 
                     output = x
                     
@@ -180,7 +181,8 @@ class NeuralNetwork:
 
                     error /= len(x_train)
 
-            error_val = sum([self.loss(y, self.predict(x)) for x, y in zip(x_valid, y_valid)]) / len(x_valid) 
+            error = sum([self.loss(y, self.predict(x)) for x, y in zip(x_train, y_train)]) / number_of_samples 
+            error_val = sum([self.loss(y, self.predict(x)) for x, y in zip(x_valid, y_valid)]) / len(x_valid)
 
             self.train_loss.append(error)
             self.val_loss.append(error_val)
