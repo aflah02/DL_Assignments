@@ -43,10 +43,18 @@ class CNN(nn.Module):
         return softmax_outputs
 
 def visualize_data(batch):
-    fig, axes = plt.subplots(nrows=1, ncols=5, figsize=(10, 3))
-    fig.suptitle("Randomly selected images from the training set", fontsize=16)
-    for ax in axes:
-        index = random.randint(0, len(batch[0]))
-        ax.imshow(batch[0][index].view(28, 28))
-        ax.set_title("Label: " + str(batch[1][index].item()))
+    # Generate a 5x5 grid of images for 5 random images in the batch per digit class
+    fig, ax = plt.subplots(5, 5, figsize=(10, 10))
+    image_classes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    for i in range(5):
+        # Choose Random Image Class
+        image_class = random.choice(image_classes)
+        # Remove the chosen class from the list
+        image_classes.remove(image_class)
+        # Choose 5 random images from the chosen class
+        images = batch[0][batch[1] == image_class]
+        images = images[torch.randperm(images.size()[0])][:5]
+        for j in range(5):
+            ax[i][j].imshow(images[j].reshape(28, 28), cmap='gray')
+            ax[i][j].axis('off')
     plt.show()
