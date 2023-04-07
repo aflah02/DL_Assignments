@@ -6,5 +6,9 @@ Assignment_1/Part_3/Data/fashion-mnist_test.csv
 Assignment_2/Part_1/Data/fashion-mnist_train.csv
 Assignment_2/Part_1/Data/fashion-mnist_test.csv
 
+global_lstm/
+local_lstm/
+classic_lstm/
 Assignment_3/Task_3/t5-small-finetuned-de-to-en
+
 venv
