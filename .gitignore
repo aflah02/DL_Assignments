@@ -13,6 +13,8 @@ t5-small-finetuned-de-to-en
 t5-small-finetuned-en-to-de
 
 venv
+Assignment_3/Task_2/t.ipynb
+Assignment_3/Task_2/temp.py
 
 .ipynb_checkpoints/
 wandb/
