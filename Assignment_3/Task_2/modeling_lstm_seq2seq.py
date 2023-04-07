@@ -18,7 +18,7 @@ class Config:
         self.input_size = input_size
         self.emb_dim = embedding_size
         self.hidden_size = hidden_size
-        self.vocab_size = vocab_size
+        self.out_size = vocab_size
         self.num_layers = num_layers
         self.dropout = dropout
         self.device = device
@@ -133,8 +133,8 @@ class LSTMEncoder(nn.Module):
     ):
         super(LSTMEncoder, self).__init__()
 
-        self.embedding = nn.Embedding(config.input_size, config.emb_dim)
-        self.lstm = nn.LSTM(config.emb_dim, config.hidden_size, config.num_layers, dropout=config.dropout, batch_first=True)
+        self.embedding = nn.Embedding(config.input_size, config.emb_dim).requires_grad_(True)
+        self.lstm = nn.LSTM(config.emb_dim, config.hidden_size, config.num_layers, dropout=config.dropout, batch_first=True).requires_grad_(True)
 
         if config.device == "cuda":
             self.embedding = self.embedding.cuda()
@@ -154,7 +154,7 @@ class LSTMDecoder(nn.Module):
         alignment: str = "global",
     ):
         super(LSTMDecoder, self).__init__()
-        self.embedding = nn.Embedding(config.input_size, config.emb_dim)
+        self.embedding = nn.Embedding(config.out_size, config.emb_dim)
         self.lstm = nn.LSTM(config.emb_dim, config.hidden_size, config.num_layers, dropout=config.dropout, batch_first=True)
         self.attention = attention
 
@@ -191,9 +191,9 @@ class LSTMSeq2Seq(nn.Module):
         self.decoder = LSTMDecoder(config=config, attention=attention, scoring_function=scoring_function, alignment=alignment)
 
         if attention:
-            self.lm_head = nn.Linear(2 * config.hidden_size, config.vocab_size)
+            self.lm_head = nn.Linear(2 * config.hidden_size, config.out_size)
         else:
-            self.lm_head = nn.Linear(config.hidden_size, config.vocab_size)
+            self.lm_head = nn.Linear(config.hidden_size, config.out_size)
         
         # if config.device == "cuda":
         #     self.encoder = self.encoder.cuda()
@@ -209,7 +209,7 @@ class LSTMSeq2Seq(nn.Module):
     def forward(self, source, target, teacher_forcing_ratio=1.0):
         batch_size = target.shape[0]
         target_len = target.shape[1]
-        target_vocab_size = self.config.vocab_size
+        target_vocab_size = self.config.out_size
         outputs = torch.zeros(batch_size, target_len, target_vocab_size, device = torch.device(self.config.device))
         encoder_outputs, hidden, cell = self.encoder(source)
         # print(encoder_outputs.shape, hidden.shape, cell.shape)
