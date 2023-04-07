@@ -12,3 +12,6 @@ classic_lstm/
 Assignment_3/Task_3/t5-small-finetuned-de-to-en
 
 venv
+
+.ipynb_checkpoints/
+wandb/
