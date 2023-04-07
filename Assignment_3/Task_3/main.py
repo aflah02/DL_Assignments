@@ -11,20 +11,24 @@ from transformers import AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq, Seq2SeqT
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
  
-raw_datasets = load_dataset("wmt16", "de-en")
+train_ds = load_dataset('wmt16', 'de-en', split='train[:1%]')
+val_ds = load_dataset('wmt16', 'de-en', split='validation')
+test_ds = load_dataset('wmt16', 'de-en', split='test')
+
+train_ds = train_ds.train_test_split(test_size = 0.5)["train"]
+
 rouge = evaluate.load("rouge")
 bleu = evaluate.load("bleu")
 
-raw_datasets["train"][0]
 model_checkpoint = "t5-small"
-prefix = "translate German to English: "
+prefix = "translate English to German: "
     
 tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
 
 max_input_length = 128
 max_target_length = 128
-source_lang = "de"
-target_lang = "en"
+source_lang = "en"
+target_lang = "de"
 
 def preprocess_function(examples):
     inputs = [prefix + ex[source_lang] for ex in examples["translation"]]
@@ -67,36 +71,40 @@ def compute_metrics(eval_preds):
     result = {k: round(v, 4) for k, v in result.items()}
     return result
 
-tokenized_datasets = raw_datasets.map(preprocess_function, batched=True)
+def train(model, model_checkpoint):
+    batch_size = 16
+    model_name = model_checkpoint.split("/")[-1]
+    args = Seq2SeqTrainingArguments(
+        f"{model_name}-finetuned-{source_lang}-to-{target_lang}",
+        evaluation_strategy = "steps", 
+        logging_strategy = "steps",
+        save_strategy = "steps",
+        learning_rate=2e-5,
+        weight_decay=0.01,
+        save_total_limit=1,
+        num_train_epochs=1,
+        predict_with_generate=True,
+        report_to = "wandb"
+    )
+
+    data_collator = DataCollatorForSeq2Seq(tokenizer, model=model)
+
+    trainer = Seq2SeqTrainer(
+        model,
+        args,
+        train_dataset=tokenized_train_datasets,
+        eval_dataset=tokenized_dev_datasets,
+        data_collator=data_collator,
+        tokenizer=tokenizer,
+        compute_metrics=compute_metrics
+    )
+
+    trainer.train()
+
+tokenized_train_datasets = train_ds.map(preprocess_function, batched=True)
+tokenized_dev_datasets = val_ds.map(preprocess_function, batched=True)
+
 model = AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint)
 model.cuda()
 
-batch_size = 16
-model_name = model_checkpoint.split("/")[-1]
-args = Seq2SeqTrainingArguments(
-    f"{model_name}-finetuned-{source_lang}-to-{target_lang}",
-    evaluation_strategy = "steps",
-    logging_strategy = "steps",
-    save_strategy = "steps",
-    learning_rate=2e-5,
-    weight_decay=0.01,
-    save_total_limit=3,
-    num_train_epochs=1,
-    predict_with_generate=True,
-    report_to = "wandb"
-)
-
-data_collator = DataCollatorForSeq2Seq(tokenizer, model=model)
-
-trainer = Seq2SeqTrainer(
-    model,
-    args,
-    train_dataset=tokenized_datasets["train"],
-    eval_dataset=tokenized_datasets["validation"],
-    data_collator=data_collator,
-    tokenizer=tokenizer,
-    compute_metrics=compute_metrics
-)
-
-
-trainer.train()
+train(model, model_checkpoint)
