@@ -21,3 +21,7 @@ Assignment_3/Task_2/temp.py
 
 .ipynb_checkpoints/
 wandb/
+Assignment_4/Preprocessed_Data/resnet_embedding_train_images.pkl
+.gitignore
+Assignment_4/Preprocessed_Data/resnet_embedding_dev_seen_images.pkl
+Assignment_4/Preprocessed_Data/resnet_embedding_test_seen_images.pkl
