@@ -25,3 +25,6 @@ Assignment_4/Preprocessed_Data/resnet_embedding_train_images.pkl
 .gitignore
 Assignment_4/Preprocessed_Data/resnet_embedding_dev_seen_images.pkl
 Assignment_4/Preprocessed_Data/resnet_embedding_test_seen_images.pkl
+Assignment_4/Preprocessed_Data/test_bert_embeddings.pkl
+Assignment_4/Preprocessed_Data/train_bert_embeddings.pkl
+Assignment_4/Preprocessed_Data/dev_bert_embeddings.pkl
